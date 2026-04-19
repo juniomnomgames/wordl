@@ -1,0 +1,338 @@
+
+/* =========================
+   GLOBAL RESET
+========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+  background: radial-gradient(circle at top, #111827, #0b1220);
+  color: #e5e7eb;
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+  padding: 10px;
+}
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+
+.container {
+  width: 500px;
+  max-width: 92vw;
+  text-align: center;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+}
+
+/* =========================
+   TITLE
+========================= */
+
+h1 {
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+/* =========================
+   INPUT
+========================= */
+
+input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: #0b1220;
+  color: white;
+  outline: none;
+  transition: 0.2s;
+  font-size: 15px;
+}
+
+input:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.15);
+}
+
+/* =========================
+   DROPDOWN LIST
+========================= */
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+li {
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+li:last-child {
+  border-bottom: none;
+}
+
+li:hover {
+  background: rgba(34, 197, 94, 0.1);
+  transform: translateX(4px);
+}
+
+/* selected item */
+.active {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  color: black;
+  font-weight: 600;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+button {
+  margin: 6px 4px;
+  padding: 10px;
+  width: 48%;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(34,197,94,0.25);
+}
+
+/* =========================
+   FEEDBACK TEXT
+========================= */
+
+#feedback {
+  margin-top: 10px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* =========================
+   TRAIT BOX (LIVE COMPARISON)
+========================= */
+
+#traitBox {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255,255,255,0.06);
+  text-align: left;
+}
+
+.trait-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+
+  opacity: 0;
+  transform: translateX(-12px);
+  animation: slideIn 0.35s ease forwards;
+}
+
+/* stagger animation */
+.trait-row:nth-child(1) { animation-delay: 0.05s; }
+.trait-row:nth-child(2) { animation-delay: 0.10s; }
+.trait-row:nth-child(3) { animation-delay: 0.15s; }
+.trait-row:nth-child(4) { animation-delay: 0.20s; }
+.trait-row:nth-child(5) { animation-delay: 0.25s; }
+.trait-row:nth-child(6) { animation-delay: 0.30s; }
+
+/* =========================
+   GUESS HISTORY
+========================= */
+
+#guessHistory {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guess-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255,255,255,0.06);
+
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeUp 0.25s ease forwards;
+}
+
+.guess-block {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #0b1220;
+
+  opacity: 0;
+  transform: translateX(-10px);
+  animation: blockIn 0.3s ease forwards;
+}
+
+/* stagger blocks */
+.guess-row .guess-block:nth-child(1) { animation-delay: 0.05s; }
+.guess-row .guess-block:nth-child(2) { animation-delay: 0.10s; }
+.guess-row .guess-block:nth-child(3) { animation-delay: 0.15s; }
+.guess-row .guess-block:nth-child(4) { animation-delay: 0.20s; }
+.guess-row .guess-block:nth-child(5) { animation-delay: 0.25s; }
+.guess-row .guess-block:nth-child(6) { animation-delay: 0.30s; }
+
+/* correct / wrong */
+.block-good {
+  background: linear-gradient(135deg, #14532d, #166534);
+  color: #22c55e;
+}
+
+.block-bad {
+  background: linear-gradient(135deg, #450a0a, #7f1d1d);
+  color: #ef4444;
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blockIn {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+  body {
+    margin-top: 20px;
+  }
+
+  .container {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  input {
+    font-size: 16px;
+    padding: 14px;
+  }
+
+  button {
+    width: 100%;
+    margin: 6px 0;
+  }
+
+  li {
+    font-size: 14px;
+    padding: 14px;
+  }
+
+  .guess-block {
+    font-size: 10px;
+  }
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (min-width: 601px) and (max-width: 900px) {
+
+  .container {
+    width: 80%;
+  }
+
+  button {
+    width: 48%;
+  }
+}
+
+/* =========================
+   DESKTOP
+========================= */
+
+@media (min-width: 901px) {
+
+  .container {
+    width: 520px;
+  }
+
+  li:hover {
+    transform: translateX(6px);
+  }
+}
+#hintBox {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.9;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hint-line {
+  color: #60a5fa;
+  animation: fadeUp 0.25s ease;
+}
+.hint-blank {
+  white-space: nowrap;
+  overflow-x: auto;
+  display: block;
+}
