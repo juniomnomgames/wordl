@@ -1,4 +1,3 @@
-
 const searchInput = document.getElementById("search");
 const results = document.getElementById("results");
 const feedback = document.getElementById("feedback");
@@ -15,32 +14,57 @@ let selected = null;
 let guessHistory = [];
 let guessedNames = new Set();
 
-/* =========================
-   STATE
-========================= */
-
 let currentResults = [];
 let activeIndex = -1;
 
 let guessCount = 0;
-let hintIndex = 0;
 
 /* =========================
-   INIT
+   WIKIPEDIA IMAGE FETCH
 ========================= */
 
-function initData() {
+async function fetchWikiImage(name) {
+  try {
+    const url =
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    return data.thumbnail?.source || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* =========================
+   INIT DATA
+========================= */
+
+async function initData() {
   flatPeople = [];
-  Object.keys(people).forEach(cat => {
-    people[cat].forEach(p => {
-      flatPeople.push({ ...p, category: cat });
-    });
-  });
+
+  for (const cat of Object.keys(people)) {
+    for (const p of people[cat]) {
+
+      const image = await fetchWikiImage(p.name);
+
+      flatPeople.push({
+        ...p,
+        category: cat,
+        image
+      });
+    }
+  }
 }
 
 function pickRandomPerson() {
   target = flatPeople[Math.floor(Math.random() * flatPeople.length)];
 }
+
+/* =========================
+   RESET GAME
+========================= */
 
 function resetGame() {
   selected = null;
@@ -54,12 +78,15 @@ function resetGame() {
   traitBox.innerHTML = "";
   historyBox.innerHTML = "";
 
-if (target) target._usedHints = [];
+  if (target) {
+    target._revealMap = null;
+    target._usedHints = null;
+  }
+
   currentResults = [];
   activeIndex = -1;
 
   guessCount = 0;
-  hintIndex = 0;
 
   pickRandomPerson();
 }
@@ -90,13 +117,26 @@ searchInput.addEventListener("input", () => {
 ========================= */
 
 function renderDropdown() {
+  if (!currentResults) return;
+
   results.innerHTML = "";
 
   currentResults.forEach((person, index) => {
     const li = document.createElement("li");
-    li.textContent = person.name;
 
-    if (index === activeIndex) li.classList.add("active");
+    li.innerHTML = `
+      ${
+        person.image
+          ? `<img src="${person.image}" class="avatar"
+              onerror="this.style.display='none'"/>`
+          : `<div class="avatar placeholder"></div>`
+      }
+      <span>${person.name}</span>
+    `;
+
+    if (index === activeIndex) {
+      li.classList.add("active");
+    }
 
     li.onclick = () => selectPerson(person);
 
@@ -120,20 +160,25 @@ function scrollToActiveItem() {
 }
 
 /* =========================
-   SELECT
+   SELECT PERSON
 ========================= */
 
 function selectPerson(person) {
   selected = person;
+
   searchInput.value = person.name;
+
   results.innerHTML = "";
   currentResults = [];
   activeIndex = -1;
-  guessBtn.click();
+
+  setTimeout(() => {
+    guessBtn.click();
+  }, 0);
 }
 
 /* =========================
-   KEYBOARD NAV
+   KEYBOARD CONTROLS (FIXED)
 ========================= */
 
 searchInput.addEventListener("keydown", (e) => {
@@ -141,16 +186,20 @@ searchInput.addEventListener("keydown", (e) => {
 
   if (e.key === "ArrowDown") {
     e.preventDefault();
-    activeIndex++;
-    if (activeIndex >= currentResults.length) activeIndex = 0;
+
+    activeIndex = (activeIndex + 1) % currentResults.length;
+
     renderDropdown();
     scrollToActiveItem();
   }
 
   if (e.key === "ArrowUp") {
     e.preventDefault();
-    activeIndex--;
-    if (activeIndex < 0) activeIndex = currentResults.length - 1;
+
+    activeIndex =
+      (activeIndex - 1 + currentResults.length) %
+      currentResults.length;
+
     renderDropdown();
     scrollToActiveItem();
   }
@@ -160,23 +209,27 @@ searchInput.addEventListener("keydown", (e) => {
 
     if (activeIndex >= 0 && currentResults[activeIndex]) {
       selectPerson(currentResults[activeIndex]);
-    } else if (currentResults.length > 0) {
-      selectPerson(currentResults[0]);
-    } else {
-      guessBtn.click();
+      return;
     }
+
+    if (currentResults.length > 0) {
+      selectPerson(currentResults[0]);
+      return;
+    }
+
+    guessBtn.click();
   }
 });
 
 /* =========================
-   TRAITS
+   TRAITS (UNCHANGED)
 ========================= */
 
 function updateTraitBox(g) {
   traitBox.innerHTML = "";
 
   const traits = [
-    { label: "Category", guess: g.category.charAt(0).toUpperCase() + g.category.slice(1), target: target.category },
+    { label: "Category", guess: g.category, target: target.category },
     { label: "Field", guess: g.field, target: target.field },
     { label: "Nationality", guess: g.nationality, target: target.nationality },
     { label: "Continent", guess: g.continent, target: target.continent },
@@ -213,7 +266,7 @@ function updateTraitBox(g) {
 }
 
 /* =========================
-   HISTORY
+   HISTORY (UNCHANGED)
 ========================= */
 
 function renderHistory() {
@@ -249,42 +302,14 @@ function renderHistory() {
 }
 
 /* =========================
-   🎉 CONFETTI
-========================= */
-
-function launchConfetti() {
-  const duration = 2000;
-  const end = Date.now() + duration;
-
-  (function frame() {
-    confetti({
-      particleCount: 6,
-      spread: 70,
-      startVelocity: 35,
-      origin: { x: Math.random(), y: Math.random() - 0.2 }
-    });
-
-    if (Date.now() < end) {
-      requestAnimationFrame(frame);
-    }
-  })();
-}
-
-/* =========================
-   💡 HINT SYSTEM
+   HINT SYSTEM (UNCHANGED)
 ========================= */
 
 function showHint() {
   if (!target) return;
 
-  // Ensure used storage exists
   if (!target._usedHints) target._usedHints = [];
 
-  const name = target.name;
-
-  // =========================
-  // GUESS 4–6 → NORMAL HINTS
-  // =========================
   if (guessCount <= 6) {
     if (!target.hints || target.hints.length === 0) return;
 
@@ -306,58 +331,42 @@ function showHint() {
     return;
   }
 
-  // =========================
-  // GUESS 7+ → NAME FILL-IN BLANK
-  // =========================
-
   const letters = target.name.split("");
 
-// create persistent reveal state once
-if (!target._revealMap) {
-  target._revealMap = Array(letters.length).fill(false);
-}
-
-// get all hidden letter indexes (ignore spaces)
-const hiddenIndexes = [];
-
-letters.forEach((char, i) => {
-  if (char !== " " && !target._revealMap[i]) {
-    hiddenIndexes.push(i);
+  if (!target._revealMap) {
+    target._revealMap = Array(letters.length).fill(false);
   }
-});
 
-// reveal ONLY ONE letter per guess
-if (hiddenIndexes.length > 0) {
-  const randIndex =
-    hiddenIndexes[Math.floor(Math.random() * hiddenIndexes.length)];
+  const hidden = [];
 
-  target._revealMap[randIndex] = true;
-}
+  letters.forEach((c, i) => {
+    if (c !== " " && !target._revealMap[i]) hidden.push(i);
+  });
 
-// build display (NO randomness)
-const revealed = letters
-  .map((char, i) => {
-    if (char === " ") return " ";
-    return target._revealMap[i] ? char : "_";
-  })
-  .join("");
+  if (hidden.length > 0) {
+    const pick = hidden[Math.floor(Math.random() * hidden.length)];
+    target._revealMap[pick] = true;
+  }
 
-// create ONE line only
-let liveHint = document.getElementById("liveHintLine");
+  const revealed = letters.map((c, i) => {
+    if (c === " ") return " ";
+    return target._revealMap[i] ? c : "_";
+  }).join("");
 
-if (!liveHint) {
-  liveHint = document.createElement("div");
-  liveHint.id = "liveHintLine";
-  liveHint.className = "hint-line hint-blank";
-  hintBox.appendChild(liveHint);
-}
+  let live = document.getElementById("liveHintLine");
 
-// overwrite same line
-liveHint.textContent = `🔤 ${revealed}`;
+  if (!live) {
+    live = document.createElement("div");
+    live.id = "liveHintLine";
+    live.className = "hint-line hint-blank";
+    hintBox.appendChild(live);
+  }
+
+  live.textContent = `🔤 ${revealed}`;
 }
 
 /* =========================
-   GUESS
+   GUESS LOGIC
 ========================= */
 
 guessBtn.addEventListener("click", () => {
@@ -385,9 +394,6 @@ guessBtn.addEventListener("click", () => {
   if (guessed.name === target.name) {
     feedback.innerHTML = "🎉 Correct!";
     updateTraitBox(guessed);
-
-    launchConfetti();
-
     searchInput.value = "";
     return;
   }
@@ -395,7 +401,6 @@ guessBtn.addEventListener("click", () => {
   updateTraitBox(guessed);
   feedback.innerHTML = "❌ Try again...";
 
-  // 🔥 HINT TRIGGER
   if (guessCount > 3) {
     showHint();
   }
