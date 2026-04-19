@@ -340,8 +340,6 @@ button:hover {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  object-fit: contain;   /* 👈 key change */
-  background: #111;      /* helps with empty space */
   padding: 2px;
 }
 
