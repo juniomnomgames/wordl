@@ -337,10 +337,18 @@ button:hover {
   display: block;
 }
 .avatar {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  padding: 2px;
+
+  object-fit: cover;
+
+  /* 👇 smart focus trick */
+  object-position: 50% 20%; /* shifts focus slightly upward (faces are usually higher) */
+
+  transform: scale(1.15); /* subtle zoom-in so faces fill better */
+
+  background: #111;
 }
 
 .placeholder {
