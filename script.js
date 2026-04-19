@@ -14,31 +14,18 @@ let selected = null;
 let guessHistory = [];
 let guessedNames = new Set();
 
+/* =========================
+   STATE
+========================= */
+
 let currentResults = [];
 let activeIndex = -1;
 
 let guessCount = 0;
 
-/* =========================
-   WIKIPEDIA IMAGE FETCH
-========================= */
-
-async function fetchWikiImage(name) {
-  try {
-    const url =
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    return data.thumbnail?.source || null;
-  } catch (e) {
-    return null;
-  }
-}
 
 /* =========================
-   INIT DATA
+   INIT
 ========================= */
 
 async function initData() {
@@ -47,24 +34,41 @@ async function initData() {
   for (const cat of Object.keys(people)) {
     for (const p of people[cat]) {
 
-      const image = await fetchWikiImage(p.name);
+      // ✅ get real thumbnail from Wikipedia
+      const img = await fetchWikiImage(p.name);
 
       flatPeople.push({
         ...p,
         category: cat,
-        image
+        image: img
       });
     }
   }
 }
 
+let imageCache = {};
+
+async function fetchWikiImage(name) {
+  if (imageCache[name]) return imageCache[name];
+
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`
+    );
+    const data = await res.json();
+
+    const img = data.originalimage?.source || data.thumbnail?.source || null;
+    imageCache[name] = img;
+    return img;
+
+  } catch {
+    return null;
+  }
+}
 function pickRandomPerson() {
   target = flatPeople[Math.floor(Math.random() * flatPeople.length)];
+  console.log("TARGET:", target?.name);
 }
-
-/* =========================
-   RESET GAME
-========================= */
 
 function resetGame() {
   selected = null;
@@ -78,10 +82,8 @@ function resetGame() {
   traitBox.innerHTML = "";
   historyBox.innerHTML = "";
 
-  if (target) {
-    target._revealMap = null;
-    target._usedHints = null;
-  }
+  if (target) target._revealMap = null;
+  if (target) target._usedHints = [];
 
   currentResults = [];
   activeIndex = -1;
@@ -117,26 +119,18 @@ searchInput.addEventListener("input", () => {
 ========================= */
 
 function renderDropdown() {
-  if (!currentResults) return;
-
   results.innerHTML = "";
 
   currentResults.forEach((person, index) => {
     const li = document.createElement("li");
 
     li.innerHTML = `
-      ${
-        person.image
-          ? `<img src="${person.image}" class="avatar"
-              onerror="this.style.display='none'"/>`
-          : `<div class="avatar placeholder"></div>`
-      }
+      <img src="${person.image}" class="avatar"
+           onerror="this.style.display='none'"/>
       <span>${person.name}</span>
     `;
 
-    if (index === activeIndex) {
-      li.classList.add("active");
-    }
+    if (index === activeIndex) li.classList.add("active");
 
     li.onclick = () => selectPerson(person);
 
@@ -160,69 +154,91 @@ function scrollToActiveItem() {
 }
 
 /* =========================
-   SELECT PERSON
+   SELECT
 ========================= */
 
 function selectPerson(person) {
   selected = person;
-
   searchInput.value = person.name;
 
   results.innerHTML = "";
   currentResults = [];
   activeIndex = -1;
 
-  setTimeout(() => {
-    guessBtn.click();
-  }, 0);
+  // 👉 directly trigger guess logic (no fake button click)
+  handleGuess();
 }
 
+function handleGuess() {
+  if (!target) {
+  console.warn("Target not ready yet");
+  return;
+}
+  const guess = searchInput.value.trim().toLowerCase();
+  if (!guess) return;
+
+  const guessed =
+    selected ||
+    flatPeople.find(p => p.name.toLowerCase() === guess);
+
+  selected = null;
+
+  // ❌ invalid guess → don't count it
+  if (!guessed) return;
+
+  // ❌ duplicate → don't count it
+  if (guessedNames.has(guessed.name)) {
+    feedback.innerHTML = "⚠️ Already guessed!";
+    searchInput.value = "";
+    return;
+  }
+
+  // ✅ NOW it's a real guess → increment
+  guessCount++;
+
+  guessedNames.add(guessed.name);
+
+  if (guessed.name === target.name) {
+  feedback.innerHTML = "🎉 Correct!";
+  updateTraitBox(guessed);
+
+  // 🎉 CONFETTI BURST
+  confetti({
+    particleCount: 120,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+
+  // 🎉 EXTRA BURSTS (feels way better)
+  setTimeout(() => {
+    confetti({
+      particleCount: 80,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 }
+    });
+    confetti({
+      particleCount: 80,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 }
+    });
+  }, 200);
+
+  searchInput.value = "";
+  return;
+}
+
+  updateTraitBox(guessed);
+  feedback.innerHTML = "❌ Try again...";
+
+  // ✅ hints now trigger properly
+  if (guessCount > 3) showHint();
+
+  searchInput.value = "";
+}
 /* =========================
-   KEYBOARD CONTROLS (FIXED)
-========================= */
-
-searchInput.addEventListener("keydown", (e) => {
-  if (!currentResults.length) return;
-
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-
-    activeIndex = (activeIndex + 1) % currentResults.length;
-
-    renderDropdown();
-    scrollToActiveItem();
-  }
-
-  if (e.key === "ArrowUp") {
-    e.preventDefault();
-
-    activeIndex =
-      (activeIndex - 1 + currentResults.length) %
-      currentResults.length;
-
-    renderDropdown();
-    scrollToActiveItem();
-  }
-
-  if (e.key === "Enter") {
-    e.preventDefault();
-
-    if (activeIndex >= 0 && currentResults[activeIndex]) {
-      selectPerson(currentResults[activeIndex]);
-      return;
-    }
-
-    if (currentResults.length > 0) {
-      selectPerson(currentResults[0]);
-      return;
-    }
-
-    guessBtn.click();
-  }
-});
-
-/* =========================
-   TRAITS (UNCHANGED)
+   TRAITS
 ========================= */
 
 function updateTraitBox(g) {
@@ -266,7 +282,7 @@ function updateTraitBox(g) {
 }
 
 /* =========================
-   HISTORY (UNCHANGED)
+   HISTORY
 ========================= */
 
 function renderHistory() {
@@ -302,13 +318,15 @@ function renderHistory() {
 }
 
 /* =========================
-   HINT SYSTEM (UNCHANGED)
+   HINT SYSTEM (UNCHANGED LOGIC)
 ========================= */
 
 function showHint() {
   if (!target) return;
 
   if (!target._usedHints) target._usedHints = [];
+
+  const name = target.name;
 
   if (guessCount <= 6) {
     if (!target.hints || target.hints.length === 0) return;
@@ -331,7 +349,8 @@ function showHint() {
     return;
   }
 
-  const letters = target.name.split("");
+  // 🔤 ONE LINE REVEAL
+  const letters = name.split("");
 
   if (!target._revealMap) {
     target._revealMap = Array(letters.length).fill(false);
@@ -364,54 +383,63 @@ function showHint() {
 
   live.textContent = `🔤 ${revealed}`;
 }
-
 /* =========================
-   GUESS LOGIC
+   KEYBOARD NAVIGATION
 ========================= */
 
-guessBtn.addEventListener("click", () => {
-  const guess = searchInput.value.trim().toLowerCase();
-  if (!guess) return;
+searchInput.addEventListener("keydown", (e) => {
+  if (!currentResults.length) return;
 
-  guessCount++;
+  // ⬇️ DOWN ARROW
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
 
-  const guessed =
-    selected ||
-    flatPeople.find(p => p.name.toLowerCase() === guess);
-
-  selected = null;
-
-  if (!guessed) return;
-
-  if (guessedNames.has(guessed.name)) {
-    feedback.innerHTML = "⚠️ Already guessed!";
-    searchInput.value = "";
-    return;
+    activeIndex = (activeIndex + 1) % currentResults.length;
+    renderDropdown();
+    scrollToActiveItem();
   }
 
-  guessedNames.add(guessed.name);
+  // ⬆️ UP ARROW
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
 
-  if (guessed.name === target.name) {
-    feedback.innerHTML = "🎉 Correct!";
-    updateTraitBox(guessed);
-    searchInput.value = "";
-    return;
+    activeIndex =
+      (activeIndex - 1 + currentResults.length) % currentResults.length;
+
+    renderDropdown();
+    scrollToActiveItem();
   }
 
-  updateTraitBox(guessed);
-  feedback.innerHTML = "❌ Try again...";
+  // ⏎ ENTER
+  if (e.key === "Enter") {
+    e.preventDefault();
 
-  if (guessCount > 3) {
-    showHint();
+    if (activeIndex >= 0) {
+      selectPerson(currentResults[activeIndex]);
+    }
   }
 
-  searchInput.value = "";
-  selected = null;
+  // ❌ ESC (optional but nice)
+  if (e.key === "Escape") {
+    results.innerHTML = "";
+    currentResults = [];
+    activeIndex = -1;
+  }
 });
+
+/* =========================
+   GUESS
+========================= */
+
+guessBtn.addEventListener("click", handleGuess);
 
 /* =========================
    START
 ========================= */
 
-initData();
-pickRandomPerson();
+async function startGame() {
+  await initData();   // wait for data to load
+  pickRandomPerson(); // now target is valid
+}
+
+startGame();

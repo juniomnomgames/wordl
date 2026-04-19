@@ -70,36 +70,57 @@ input:focus {
 
 ul {
   list-style: none;
-  padding: 0;
-  margin: 0;
+  margin: 6px 0 0 0;
+  padding: 4px;
+
   max-height: 220px;
   overflow-y: auto;
+
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.95);
   border: 1px solid rgba(255,255,255,0.06);
+
+  /* smoother scroll */
+  scroll-behavior: smooth;
+
+  /* subtle inner glow */
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
 }
 
 li {
-  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 12px;
+  border-radius: 10px;
+
   cursor: pointer;
   transition: all 0.15s ease;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* remove hard borders */
+li + li {
+  margin-top: 4px;
+}
+
+li:hover {
+  background: rgba(34, 197, 94, 0.12);
 }
 
 li:last-child {
   border-bottom: none;
 }
 
-li:hover {
-  background: rgba(34, 197, 94, 0.1);
-  transform: translateX(4px);
-}
+
 
 /* selected item */
 .active {
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  color: black;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #04130a;
   font-weight: 600;
+
+  box-shadow: 0 6px 18px rgba(34,197,94,0.25);
 }
 
 /* =========================
@@ -154,8 +175,7 @@ button:hover {
   border-bottom: 1px solid rgba(255,255,255,0.05);
 
   opacity: 0;
-  transform: translateX(-12px);
-  animation: slideIn 0.35s ease forwards;
+  animation: fadeUp 0.25s ease forwards;
 }
 
 /* stagger animation */
@@ -227,14 +247,13 @@ button:hover {
    ANIMATIONS
 ========================= */
 
-@keyframes slideIn {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+
 
 @keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
@@ -358,3 +377,21 @@ button:hover {
   background: #444;
   margin-right: 8px;
 }
+
+ul::-webkit-scrollbar {
+  width: 8px;
+}
+
+ul::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+ul::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+}
+
+ul::-webkit-scrollbar-thumb:hover {
+  background: rgba(34,197,94,0.5);
+}
+
