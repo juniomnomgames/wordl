@@ -198,18 +198,19 @@ function handleGuess() {
 
   guessedNames.add(guessed.name);
 
-  if (guessed.name === target.name) {
+ if (guessed.name === target.name) {
   feedback.innerHTML = "🎉 Correct!";
-  updateTraitBox(guessed);
 
-  // 🎉 CONFETTI BURST
+  updateTraitBox(guessed);
+  showWinScreen(target); // 👈 ALWAYS use target (true answer)
+
+  // 🎉 CONFETTI
   confetti({
-    particleCount: 120,
+    particleCount: 140,
     spread: 70,
     origin: { y: 0.6 }
   });
 
-  // 🎉 EXTRA BURSTS (feels way better)
   setTimeout(() => {
     confetti({
       particleCount: 80,
@@ -217,6 +218,7 @@ function handleGuess() {
       spread: 55,
       origin: { x: 0 }
     });
+
     confetti({
       particleCount: 80,
       angle: 120,
@@ -426,6 +428,28 @@ searchInput.addEventListener("keydown", (e) => {
     activeIndex = -1;
   }
 });
+function showWinScreen(person) {
+  const winScreen = document.getElementById("winScreen");
+
+  winScreen.innerHTML = `
+    <div class="win-content">
+      <img src="${person.image}" />
+      <h2>🎉 Correct!</h2>
+      <h3>${person.name}</h3>
+      <p class="win-sub">Click anywhere to continue</p>
+    </div>
+  `;
+
+  winScreen.classList.remove("hidden");
+
+  // prevent background interaction feeling weird
+  winScreen.style.pointerEvents = "auto";
+
+  // click ANYWHERE closes it
+  winScreen.onclick = () => {
+    winScreen.classList.add("hidden");
+  };
+}
 
 /* =========================
    GUESS
