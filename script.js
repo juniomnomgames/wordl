@@ -65,8 +65,13 @@ async function fetchWikiImage(name) {
     return null;
   }
 }
-function pickRandomPerson() {
-  target = flatPeople[Math.floor(Math.random() * flatPeople.length)];
+function pickDailyPerson() {
+  const today = new Date();
+  const start = new Date(today.getFullYear(), 0, 0);
+  const diff = today - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  const day = Math.floor(diff / oneDay);
+  target = flatPeople[day % flatPeople.length];
   console.log("TARGET:", target?.name);
 }
 
@@ -90,7 +95,7 @@ function resetGame() {
 
   guessCount = 0;
 
-  pickRandomPerson();
+  pickDailyPerson();
 }
 
 /* =========================
@@ -463,7 +468,7 @@ guessBtn.addEventListener("click", handleGuess);
 
 async function startGame() {
   await initData();   // wait for data to load
-  pickRandomPerson(); // now target is valid
+  pickDailyPerson(); // now target is valid
 }
 
 startGame();

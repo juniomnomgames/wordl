@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Guess Who</title>
+  <link rel="stylesheet" href="menu.css">
+</head>
+<body class="menu-body">
+
+  <div class="glow-bg"></div>
+
+  <div class="menu-wrapper">
+    <h1 class="title">🎮 Guess Who</h1>
+    <p class="subtitle">Login to Save Your Stats</p>
+
+    <div class="menu-card">
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="loginBtn">Login</button>
+      <button id="signupBtn">Sign Up</button>
+      <p id="message"></p>
+    </div>
+
+    <div class="menu-footer">
+      <a href="index.html">Back to Menu</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+
+    const firebaseConfig = {
+      // Add your Firebase config here
+      apiKey: "your-api-key",
+      authDomain: "your-project.firebaseapp.com",
+      projectId: "your-project",
+      // etc.
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        window.location.href = 'index.html';
+      } catch (error) {
+        document.getElementById('message').innerText = error.message;
+      }
+    });
+
+    document.getElementById('signupBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        window.location.href = 'index.html';
+      } catch (error) {
+        document.getElementById('message').innerText = error.message;
+      }
+    });
+  </script>
+
+</body>
+</html>

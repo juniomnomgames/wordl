@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blur Zoom Game</title>
+  <link rel="stylesheet" href="Blur_Zoom.css">
+</head>
+
+<body class="step-0">
+
+  <div class="game">
+    <img id="mainImage" />
+
+    <div class="overlay">
+      <h1>Guess Who</h1>
+
+      <input id="guessInput" placeholder="Guess the person..." />
+      <button id="guessBtn">Guess</button>
+
+      <div id="feedback"></div>
+      <div id="blankName"></div>
+    </div>
+  </div>
+
+  <div id="winScreen" class="hidden"></div>
+
+  <script src="Blur_Zoom_data.js"></script>
+  <script src="Blur_Zoom.js"></script>
+</body>
+</html> 
